@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DailyNoteRepository extends JpaRepository<DailyNote, Long> {
 
+    // 수정·삭제 시에도 사용자 소유 조건을 함께 적용한다.
+    Optional<DailyNote> findByNoteIdAndUserUserId(Long noteId, Long userId);
+
     // 특정 사용자의 특정 날짜 특이사항 조회
     Optional<DailyNote> findByUserUserIdAndNoteDate(Long userId, LocalDate noteDate);
 

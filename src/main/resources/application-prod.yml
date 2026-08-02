@@ -1,0 +1,12 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+# 운영 환경에서는 SQL과 요청 상세 로그를 기본적으로 비활성화한다.
+logging:
+  level:
+    org.hibernate.SQL: INFO
+    org.springframework.security: INFO
