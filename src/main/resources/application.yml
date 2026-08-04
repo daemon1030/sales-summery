@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    default: local
   datasource:
     url: "${DB_URL:jdbc:postgresql://localhost:5432/sales_summery}"
     username: "${DB_USERNAME:postgres}"
@@ -23,5 +25,5 @@ spring:
 
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:dev-local-jwt-secret-key-32-bytes}
     expiration: 1h

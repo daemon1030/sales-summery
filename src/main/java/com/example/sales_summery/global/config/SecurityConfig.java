@@ -24,8 +24,9 @@ public class SecurityConfig {
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(entryPoint)
                         .accessDeniedHandler(deniedHandler))
                 .authorizeHttpRequests(auth -> auth
-                        // API 테스트 화면과 인증 진입점은 토큰 없이 접근할 수 있다.
-                        .requestMatchers("/", "/index.html", "/styles.css", "/app.js", "/openapi.yaml",
+                        // 서비스 프론트와 API 테스트 화면, 인증 진입점은 토큰 없이 접근할 수 있다.
+                        // 화면 내부의 보호 페이지 접근은 Vue Router와 JWT API 요청에서 검증한다.
+                        .requestMatchers("/", "/index.html", "/service/**", "/api-test/**", "/openapi.yaml",
                                 "/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

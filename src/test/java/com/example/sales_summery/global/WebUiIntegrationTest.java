@@ -20,11 +20,15 @@ class WebUiIntegrationTest {
 
     @Test
     void testPageIsAvailableWithoutAuthentication() throws Exception {
-        // 로그인 전에도 테스트 화면과 정적 파일을 불러올 수 있어야 한다.
-        mockMvc.perform(get("/index.html"))
+        // 로그인 전에도 서비스 진입점과 별도로 분리한 API 테스트 화면을 불러올 수 있어야 한다.
+        mockMvc.perform(get("/index.html")).andExpect(status().isOk());
+        mockMvc.perform(get("/service/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Sales Summary")));
+        mockMvc.perform(get("/api-test/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Sales Summery API Tester")));
-        mockMvc.perform(get("/app.js")).andExpect(status().isOk());
-        mockMvc.perform(get("/styles.css")).andExpect(status().isOk());
+        mockMvc.perform(get("/api-test/app.js")).andExpect(status().isOk());
+        mockMvc.perform(get("/api-test/styles.css")).andExpect(status().isOk());
     }
 }
