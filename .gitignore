@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# 실제 비밀값은 저장소에 커밋하지 않고 예시 파일만 관리한다.
+.env
+.env.*
+!.env.example

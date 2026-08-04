@@ -26,6 +26,7 @@ import java.util.Locale;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Getter
 @Entity
@@ -57,7 +58,7 @@ public class User extends BaseEntity {
     @Getter(AccessLevel.NONE)
     private String passwordHash;
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 50)
     private String name;
 
     @Enumerated(EnumType.STRING)                // UserStatus에 있는 값으로만 지정가능
@@ -67,7 +68,7 @@ public class User extends BaseEntity {
     @Min(1)
     @Max(28)
     @Column(name = "settlement_start_day", nullable = false, columnDefinition = "SMALLINT DEFAULT 1")       // 1이 기본값
-    private int settlementStartDay;
+    private short settlementStartDay;
 
     @Column(name = "withdrawn_at")                // 사용자가 탈퇴한 시간
     private LocalDateTime withdrawnAt;
@@ -86,7 +87,7 @@ public class User extends BaseEntity {
         this.passwordHash = passwordHash;
         this.name = name;
         this.status = UserStatus.ACTIVE;
-        this.settlementStartDay = settlementStartDay;
+        this.settlementStartDay = (short) settlementStartDay;
     }
 
     public static User create(String loginId, String passwordHash, String name, int settlementStartDay) {   // create를 통해서만 생성가능
@@ -95,12 +96,30 @@ public class User extends BaseEntity {
 
     public void changeSettlementStartDay(int settlementStartDay) {      // 기준일을 바꾸는 함수
         validateSettlementStartDay(settlementStartDay);
-        this.settlementStartDay = settlementStartDay;
+        this.settlementStartDay = (short) settlementStartDay;
     }
 
     public void withdraw() {                                            // 탈퇴로 상태를 바꿔줌, 탈퇴한 시간 기록
         this.status = UserStatus.WITHDRAWN;
         this.withdrawnAt = LocalDateTime.now(KOREA_ZONE_ID);
+    }
+
+    // DB에는 SMALLINT로 저장하지만 API와 도메인에서는 기존 int 계약을 유지한다.
+    public int getSettlementStartDay() {
+        return settlementStartDay;
+    }
+
+    public void changeName(String name) {
+        this.name = name;
+    }
+
+    public void changePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    // 비밀번호 해시를 외부에 노출하지 않고 일치 여부만 반환한다.
+    public boolean matchesPassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        return passwordEncoder.matches(rawPassword, passwordHash);
     }
 
     public List<FinancialCategory> getFinancialCategories() {           // coptOf로 안의 리스트를 수정하지 못하게 가져옴
