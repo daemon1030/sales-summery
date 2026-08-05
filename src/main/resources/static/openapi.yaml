@@ -138,6 +138,49 @@ paths:
     get:
       summary: 기간별 항목 합계
       responses: { '200': { description: 성공 } }
+  /dashboard/profit-trend:
+    get:
+      summary: 일별·월별·연별 손익 추이
+      description: 조회 단위에 따라 기간별 수입, 지출, 순이익을 반환하며 기록이 없는 기간은 0으로 채운다.
+      parameters:
+        - { name: unit, in: query, required: true, schema: { $ref: '#/components/schemas/TrendUnit' } }
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: 일별 조회 시작일 }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: 일별 조회 종료일 }
+        - { name: year, in: query, schema: { type: integer }, description: 월별 조회 연도 }
+        - { name: startYear, in: query, schema: { type: integer }, description: 연별 조회 시작 연도 }
+        - { name: endYear, in: query, schema: { type: integer }, description: 연별 조회 종료 연도 }
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, const: true }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProfitTrendPoint' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /dashboard/category-breakdown:
+    get:
+      summary: 선택 연월의 수입·지출 항목별 비교
+      description: 해당 월에 기록이 존재하는 항목을 활성 상태와 관계없이 금액 내림차순으로 반환한다.
+      parameters:
+        - { name: year, in: query, required: true, schema: { type: integer } }
+        - { name: month, in: query, required: true, schema: { type: integer, minimum: 1, maximum: 12 } }
+        - { name: transactionType, in: query, required: true, schema: { $ref: '#/components/schemas/TransactionType' } }
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, const: true }
+                  data: { $ref: '#/components/schemas/CategoryBreakdown' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /dashboard/recent:
     get:
       summary: 최근 기록 5건
@@ -153,6 +196,34 @@ components:
     RecordId: { name: recordId, in: path, required: true, schema: { type: integer, format: int64 } }
   schemas:
     TransactionType: { type: string, enum: [INCOME, EXPENSE] }
+    TrendUnit: { type: string, enum: [DAILY, MONTHLY, YEARLY] }
+    ProfitTrendPoint:
+      type: object
+      required: [period, totalIncome, totalExpense, netProfit]
+      properties:
+        period: { type: string, examples: ['2026-08-01', '2026-08', '2026'] }
+        totalIncome: { type: number }
+        totalExpense: { type: number }
+        netProfit: { type: number }
+    CategoryBreakdownItem:
+      type: object
+      required: [categoryId, categoryName, amount, percentage]
+      properties:
+        categoryId: { type: integer, format: int64 }
+        categoryName: { type: string }
+        amount: { type: number }
+        percentage: { type: number, description: 전체 금액에서 차지하는 비율, 소수점 첫째 자리 }
+    CategoryBreakdown:
+      type: object
+      required: [year, month, transactionType, totalAmount, items]
+      properties:
+        year: { type: integer }
+        month: { type: integer }
+        transactionType: { $ref: '#/components/schemas/TransactionType' }
+        totalAmount: { type: number }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CategoryBreakdownItem' }
     Error:
       type: object
       properties:

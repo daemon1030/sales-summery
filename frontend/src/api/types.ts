@@ -49,6 +49,27 @@ export interface CategoryTotal {
   transactionType: TransactionType;
   totalAmount: number;
 }
+export type TrendUnit = "DAILY" | "MONTHLY" | "YEARLY";
+export type ProfitMetric = "INCOME" | "EXPENSE" | "NET_PROFIT";
+export interface ProfitTrendPoint {
+  period: string;
+  totalIncome: number;
+  totalExpense: number;
+  netProfit: number;
+}
+export interface CategoryBreakdownItem {
+  categoryId: number;
+  categoryName: string;
+  amount: number;
+  percentage: number;
+}
+export interface CategoryBreakdown {
+  year: number;
+  month: number;
+  transactionType: TransactionType;
+  totalAmount: number;
+  items: CategoryBreakdownItem[];
+}
 export interface DailyNote {
   noteId: number;
   noteDate: string;

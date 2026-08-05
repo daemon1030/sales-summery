@@ -2,8 +2,12 @@ package com.example.sales_summery.dashboard.controller;
 
 import com.example.sales_summery.auth.security.AuthenticatedUser;
 import com.example.sales_summery.dashboard.dto.CategoryTotalResponse;
+import com.example.sales_summery.dashboard.dto.CategoryBreakdownResponse;
 import com.example.sales_summery.dashboard.dto.PeriodSummaryResponse;
 import com.example.sales_summery.dashboard.dto.ProfitSummaryResponse;
+import com.example.sales_summery.dashboard.dto.ProfitTrendResponse;
+import com.example.sales_summery.dashboard.dto.TrendUnit;
+import com.example.sales_summery.category.domain.TransactionType;
 import com.example.sales_summery.dashboard.service.DashboardService;
 import com.example.sales_summery.financialrecord.dto.FinancialRecordResponse;
 import com.example.sales_summery.global.response.ApiResponse;
@@ -48,6 +52,29 @@ public class DashboardController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ApiResponse.success(dashboardService.categoryTotals(user.userId(), startDate, endDate));
+    }
+
+    @GetMapping("/profit-trend")
+    public ApiResponse<List<ProfitTrendResponse>> profitTrend(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam TrendUnit unit,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer startYear,
+            @RequestParam(required = false) Integer endYear) {
+        return ApiResponse.success(dashboardService.profitTrend(user.userId(), unit,
+                startDate, endDate, year, startYear, endYear));
+    }
+
+    @GetMapping("/category-breakdown")
+    public ApiResponse<CategoryBreakdownResponse> categoryBreakdown(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam TransactionType transactionType) {
+        return ApiResponse.success(dashboardService.categoryBreakdown(
+                user.userId(), year, month, transactionType));
     }
 
     @GetMapping("/recent")

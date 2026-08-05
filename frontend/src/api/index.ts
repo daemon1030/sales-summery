@@ -1,8 +1,8 @@
 import { apiRequest, jsonBody } from "./client";
 import type {
-  Category, CategoryTotal, CostType, DailyNote, FinancialRecord, Frequency,
+  Category, CategoryBreakdown, CategoryTotal, CostType, DailyNote, FinancialRecord, Frequency,
   LoginResponse, MessageResponse, PageResponse, PeriodSummary, ProfitSummary,
-  TransactionType, User,
+  ProfitTrendPoint, TransactionType, TrendUnit, User,
 } from "./types";
 
 const query = <T extends object>(params: T) => {
@@ -68,6 +68,16 @@ export const dashboardApi = {
   categoryTotals: (startDate: string, endDate: string) => apiRequest<CategoryTotal[]>(
     `/dashboard/category-totals?${query({ startDate, endDate })}`),
   recent: () => apiRequest<FinancialRecord[]>("/dashboard/recent"),
+  profitTrend: (params: {
+    unit: TrendUnit;
+    startDate?: string;
+    endDate?: string;
+    year?: number;
+    startYear?: number;
+    endYear?: number;
+  }) => apiRequest<ProfitTrendPoint[]>(`/dashboard/profit-trend?${query(params)}`),
+  categoryBreakdown: (year: number, month: number, transactionType: TransactionType) =>
+    apiRequest<CategoryBreakdown>(`/dashboard/category-breakdown?${query({ year, month, transactionType })}`),
 };
 
 export const noteApi = {

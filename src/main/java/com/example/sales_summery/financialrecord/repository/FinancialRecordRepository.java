@@ -11,6 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.example.sales_summery.category.domain.TransactionType;
 import com.example.sales_summery.dashboard.repository.CategoryTotalProjection;
+import com.example.sales_summery.dashboard.repository.CategoryBreakdownProjection;
+import com.example.sales_summery.dashboard.repository.DailyProfitTrendProjection;
+import com.example.sales_summery.dashboard.repository.NumericProfitTrendProjection;
 import com.example.sales_summery.dashboard.repository.ProfitSummaryProjection;
 
 public interface FinancialRecordRepository extends JpaRepository<FinancialRecord, Long> {
@@ -64,6 +67,67 @@ public interface FinancialRecordRepository extends JpaRepository<FinancialRecord
     List<CategoryTotalProjection> summarizeByCategory(@Param("userId") Long userId,
                                                        @Param("startDate") LocalDate startDate,
                                                        @Param("endDate") LocalDate endDate);
+
+    @Query("""
+            select r.recordDate as period,
+                   coalesce(sum(case when c.transactionType = com.example.sales_summery.category.domain.TransactionType.INCOME
+                                then r.amount else 0 end), 0) as totalIncome,
+                   coalesce(sum(case when c.transactionType = com.example.sales_summery.category.domain.TransactionType.EXPENSE
+                                then r.amount else 0 end), 0) as totalExpense
+            from FinancialRecord r join r.category c
+            where c.user.userId = :userId and r.recordDate between :startDate and :endDate
+            group by r.recordDate
+            order by r.recordDate
+            """)
+    List<DailyProfitTrendProjection> summarizeDailyTrend(@Param("userId") Long userId,
+                                                          @Param("startDate") LocalDate startDate,
+                                                          @Param("endDate") LocalDate endDate);
+
+    @Query("""
+            select month(r.recordDate) as period,
+                   coalesce(sum(case when c.transactionType = com.example.sales_summery.category.domain.TransactionType.INCOME
+                                then r.amount else 0 end), 0) as totalIncome,
+                   coalesce(sum(case when c.transactionType = com.example.sales_summery.category.domain.TransactionType.EXPENSE
+                                then r.amount else 0 end), 0) as totalExpense
+            from FinancialRecord r join r.category c
+            where c.user.userId = :userId and r.recordDate between :startDate and :endDate
+            group by month(r.recordDate)
+            order by month(r.recordDate)
+            """)
+    List<NumericProfitTrendProjection> summarizeMonthlyTrend(@Param("userId") Long userId,
+                                                              @Param("startDate") LocalDate startDate,
+                                                              @Param("endDate") LocalDate endDate);
+
+    @Query("""
+            select year(r.recordDate) as period,
+                   coalesce(sum(case when c.transactionType = com.example.sales_summery.category.domain.TransactionType.INCOME
+                                then r.amount else 0 end), 0) as totalIncome,
+                   coalesce(sum(case when c.transactionType = com.example.sales_summery.category.domain.TransactionType.EXPENSE
+                                then r.amount else 0 end), 0) as totalExpense
+            from FinancialRecord r join r.category c
+            where c.user.userId = :userId and r.recordDate between :startDate and :endDate
+            group by year(r.recordDate)
+            order by year(r.recordDate)
+            """)
+    List<NumericProfitTrendProjection> summarizeYearlyTrend(@Param("userId") Long userId,
+                                                             @Param("startDate") LocalDate startDate,
+                                                             @Param("endDate") LocalDate endDate);
+
+    @Query("""
+            select c.categoryId as categoryId, c.categoryName as categoryName,
+                   sum(r.amount) as amount
+            from FinancialRecord r join r.category c
+            where c.user.userId = :userId
+              and c.transactionType = :transactionType
+              and r.recordDate between :startDate and :endDate
+            group by c.categoryId, c.categoryName
+            order by sum(r.amount) desc, c.categoryName asc
+            """)
+    List<CategoryBreakdownProjection> summarizeCategoryBreakdown(
+            @Param("userId") Long userId,
+            @Param("transactionType") TransactionType transactionType,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 
     Page<FinancialRecord> findAllByCategoryUserUserIdOrderByRecordDateDescCreatedAtDesc(
             Long userId, Pageable pageable);

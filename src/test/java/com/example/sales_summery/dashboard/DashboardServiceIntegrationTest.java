@@ -8,6 +8,7 @@ import com.example.sales_summery.auth.service.SignupService;
 import com.example.sales_summery.category.domain.TransactionType;
 import com.example.sales_summery.category.service.CategoryService;
 import com.example.sales_summery.dashboard.service.DashboardService;
+import com.example.sales_summery.dashboard.dto.TrendUnit;
 import com.example.sales_summery.financialrecord.dto.CreateFinancialRecordRequest;
 import com.example.sales_summery.financialrecord.service.FinancialRecordService;
 import java.math.BigDecimal;
@@ -67,6 +68,72 @@ class DashboardServiceIntegrationTest {
         assertThat(dashboardService.recent(user.userId())).hasSize(5);
         assertThat(dashboardService.recent(user.userId()).getFirst().recordDate())
                 .isEqualTo(LocalDate.of(2026, 8, 6));
+    }
+
+    @Test
+    void dailyAndMonthlyTrendFillPeriodsWithoutRecordsWithZeros() {
+        SignupResponse user = signup("dash_04");
+        var categories = categoryService.getCategories(user.userId(), true);
+        var income = categories.stream().filter(c -> c.transactionType() == TransactionType.INCOME)
+                .findFirst().orElseThrow();
+        var expense = categories.stream().filter(c -> c.transactionType() == TransactionType.EXPENSE)
+                .findFirst().orElseThrow();
+        create(user.userId(), income.categoryId(), LocalDate.of(2026, 8, 2), "10000");
+        create(user.userId(), expense.categoryId(), LocalDate.of(2026, 8, 2), "3000");
+
+        var daily = dashboardService.profitTrend(user.userId(), TrendUnit.DAILY,
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), null, null, null);
+        assertThat(daily).extracting("period")
+                .containsExactly("2026-08-01", "2026-08-02", "2026-08-03");
+        assertThat(daily.getFirst().totalIncome()).isEqualByComparingTo("0");
+        assertThat(daily.get(1).totalIncome()).isEqualByComparingTo("10000");
+        assertThat(daily.get(1).totalExpense()).isEqualByComparingTo("3000");
+        assertThat(daily.get(1).netProfit()).isEqualByComparingTo("7000");
+
+        var monthly = dashboardService.profitTrend(user.userId(), TrendUnit.MONTHLY,
+                null, null, 2026, null, null);
+        assertThat(monthly).hasSize(12);
+        assertThat(monthly.getFirst().period()).isEqualTo("2026-01");
+        assertThat(monthly.get(7).totalIncome()).isEqualByComparingTo("10000");
+        assertThat(monthly.get(8).totalIncome()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void yearlyTrendFillsMissingYears() {
+        SignupResponse user = signup("dash_05");
+        Long incomeId = categoryService.getCategories(user.userId(), true).stream()
+                .filter(c -> c.transactionType() == TransactionType.INCOME)
+                .findFirst().orElseThrow().categoryId();
+        create(user.userId(), incomeId, LocalDate.of(2026, 3, 1), "25000");
+
+        var yearly = dashboardService.profitTrend(user.userId(), TrendUnit.YEARLY,
+                null, null, null, 2025, 2027);
+        assertThat(yearly).extracting("period").containsExactly("2025", "2026", "2027");
+        assertThat(yearly.getFirst().totalIncome()).isEqualByComparingTo("0");
+        assertThat(yearly.get(1).totalIncome()).isEqualByComparingTo("25000");
+        assertThat(yearly.get(2).totalIncome()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void categoryBreakdownIncludesInactiveCategoriesAndCalculatesPercentages() {
+        SignupResponse user = signup("dash_06");
+        var expenses = categoryService.getCategories(user.userId(), true).stream()
+                .filter(c -> c.transactionType() == TransactionType.EXPENSE).toList();
+        var larger = expenses.get(0);
+        var smaller = expenses.get(1);
+        LocalDate date = LocalDate.of(2026, 8, 10);
+        create(user.userId(), larger.categoryId(), date, "8000");
+        create(user.userId(), smaller.categoryId(), date, "2000");
+        categoryService.deactivate(user.userId(), larger.categoryId());
+
+        var breakdown = dashboardService.categoryBreakdown(
+                user.userId(), 2026, 8, TransactionType.EXPENSE);
+
+        assertThat(breakdown.totalAmount()).isEqualByComparingTo("10000");
+        assertThat(breakdown.items()).extracting("categoryId")
+                .containsExactly(larger.categoryId(), smaller.categoryId());
+        assertThat(breakdown.items()).extracting("percentage")
+                .containsExactly(new BigDecimal("80.0"), new BigDecimal("20.0"));
     }
 
     private void create(Long userId, Long categoryId, LocalDate date, String amount) {

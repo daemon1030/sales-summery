@@ -2,6 +2,7 @@ package com.example.sales_summery.global;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,9 @@ class WebUiIntegrationTest {
         mockMvc.perform(get("/service/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Sales Summary")));
+        mockMvc.perform(get("/service/"))
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("/service/index.html"));
         mockMvc.perform(get("/api-test/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Sales Summery API Tester")));
