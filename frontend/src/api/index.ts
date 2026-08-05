@@ -1,8 +1,8 @@
-import { apiRequest, jsonBody } from "./client";
+import { apiDownload, apiRequest, jsonBody } from "./client";
 import type {
   Category, CategoryBreakdown, CategoryTotal, CostType, DailyNote, FinancialRecord, Frequency,
   LoginResponse, MessageResponse, PageResponse, PeriodSummary, ProfitSummary,
-  ProfitTrendPoint, TransactionType, TrendUnit, User,
+  ProfitTrendPoint, TransactionType, TrendUnit, User, ImportAnalysis, ImportColumnMapping, ImportResult,
 } from "./types";
 
 const query = <T extends object>(params: T) => {
@@ -88,4 +88,15 @@ export const noteApi = {
   update: (id: number, content: string) => apiRequest<DailyNote>(
     `/daily-notes/${id}`, { method: "PATCH", ...jsonBody({ content }) }),
   remove: (id: number) => apiRequest<MessageResponse>(`/daily-notes/${id}`, { method: "DELETE" }),
+};
+
+export const importApi = {
+  template: () => apiDownload("/financial-record-imports/template"),
+  analyze: (files: File[]) => {
+    const body = new FormData();
+    files.forEach(file => body.append("files", file));
+    return apiRequest<ImportAnalysis>("/financial-record-imports/analyze", { method: "POST", body });
+  },
+  confirm: (importToken: string, mappings: ImportColumnMapping[]) => apiRequest<ImportResult>(
+    `/financial-record-imports/${importToken}/confirm`, { method: "POST", ...jsonBody({ mappings }) }),
 };

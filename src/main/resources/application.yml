@@ -1,6 +1,10 @@
 spring:
   profiles:
     default: local
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 100MB
   datasource:
     url: "${DB_URL:jdbc:postgresql://localhost:5432/sales_summery}"
     username: "${DB_USERNAME:postgres}"

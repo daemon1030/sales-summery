@@ -67,6 +67,8 @@ export interface CategoryBreakdown {
   year: number;
   month: number;
   transactionType: TransactionType;
+  startDate: string;
+  endDate: string;
   totalAmount: number;
   items: CategoryBreakdownItem[];
 }
@@ -76,4 +78,55 @@ export interface DailyNote {
   content: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type ImportFileStatus = "READY" | "DUPLICATE" | "INVALID";
+export type ImportColumnStatus = "AUTO_MATCHED" | "NEEDS_MAPPING";
+export type ImportMappingAction = "EXISTING" | "CREATE" | "IGNORE";
+
+export interface ImportFileAnalysis {
+  fileName: string;
+  status: ImportFileStatus;
+  rowCount: number;
+  recordCount: number;
+  noteCount: number;
+  errors: string[];
+}
+
+export interface ImportColumnAnalysis {
+  header: string;
+  status: ImportColumnStatus;
+  categoryId: number | null;
+  categoryName: string | null;
+  valueCount: number;
+  totalAmount: number;
+}
+
+export interface ImportAnalysis {
+  importToken: string;
+  files: ImportFileAnalysis[];
+  columns: ImportColumnAnalysis[];
+  requiresMapping: boolean;
+  readyFileCount: number;
+  duplicateFileCount: number;
+  invalidFileCount: number;
+}
+
+export interface ImportColumnMapping {
+  header: string;
+  action: ImportMappingAction;
+  categoryId: number | null;
+  categoryName: string | null;
+  transactionType: TransactionType | null;
+  costType: CostType | null;
+  frequency: Frequency | null;
+}
+
+export interface ImportResult {
+  importedFileCount: number;
+  duplicateFileCount: number;
+  createdCategoryCount: number;
+  createdRecordCount: number;
+  createdNoteCount: number;
+  skippedNoteCount: number;
 }

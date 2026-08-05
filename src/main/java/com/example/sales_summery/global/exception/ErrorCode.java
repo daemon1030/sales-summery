@@ -22,6 +22,9 @@ public enum ErrorCode {
     DUPLICATE_CATEGORY_NAME(HttpStatus.CONFLICT, "이미 사용 중인 항목명입니다."),
     DUPLICATE_DAILY_NOTE(HttpStatus.CONFLICT, "해당 날짜의 특이사항이 이미 존재합니다."),
     CATEGORY_INACTIVE(HttpStatus.BAD_REQUEST, "비활성 항목에는 기록을 등록할 수 없습니다."),
+    IMPORT_FILE_INVALID(HttpStatus.BAD_REQUEST, "가져올 수 없는 엑셀 파일입니다."),
+    IMPORT_MAPPING_REQUIRED(HttpStatus.BAD_REQUEST, "새로운 엑셀 열의 카테고리 설정이 필요합니다."),
+    IMPORT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "엑셀 가져오기 정보를 찾을 수 없습니다. 파일을 다시 올려주세요."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;

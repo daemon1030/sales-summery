@@ -13,6 +13,7 @@ export const router = createRouter({
         { path: "", redirect: "/dashboard" },
         { path: "dashboard", name: "dashboard", component: () => import("./pages/DashboardPage.vue") },
         { path: "records", name: "records", component: () => import("./pages/RecordsPage.vue") },
+        { path: "imports", name: "imports", component: () => import("./pages/ImportPage.vue") },
         { path: "categories", name: "categories", component: () => import("./pages/CategoriesPage.vue") },
         { path: "daily-notes", name: "daily-notes", component: () => import("./pages/DailyNotesPage.vue") },
         { path: "settings", name: "settings", component: () => import("./pages/SettingsPage.vue") },

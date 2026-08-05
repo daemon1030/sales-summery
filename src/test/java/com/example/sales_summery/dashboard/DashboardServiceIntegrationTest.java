@@ -11,6 +11,7 @@ import com.example.sales_summery.dashboard.service.DashboardService;
 import com.example.sales_summery.dashboard.dto.TrendUnit;
 import com.example.sales_summery.financialrecord.dto.CreateFinancialRecordRequest;
 import com.example.sales_summery.financialrecord.service.FinancialRecordService;
+import com.example.sales_summery.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ class DashboardServiceIntegrationTest {
     @Autowired CategoryService categoryService;
     @Autowired FinancialRecordService recordService;
     @Autowired DashboardService dashboardService;
+    @Autowired UserRepository userRepository;
 
     @Test
     void emptySummaryReturnsZerosInsteadOfNull() {
@@ -117,6 +119,7 @@ class DashboardServiceIntegrationTest {
     @Test
     void categoryBreakdownIncludesInactiveCategoriesAndCalculatesPercentages() {
         SignupResponse user = signup("dash_06");
+        userRepository.findById(user.userId()).orElseThrow().changeSettlementStartDay(8);
         var expenses = categoryService.getCategories(user.userId(), true).stream()
                 .filter(c -> c.transactionType() == TransactionType.EXPENSE).toList();
         var larger = expenses.get(0);
@@ -124,12 +127,18 @@ class DashboardServiceIntegrationTest {
         LocalDate date = LocalDate.of(2026, 8, 10);
         create(user.userId(), larger.categoryId(), date, "8000");
         create(user.userId(), smaller.categoryId(), date, "2000");
+        create(user.userId(), larger.categoryId(), LocalDate.of(2026, 8, 7), "50000");
+        create(user.userId(), larger.categoryId(), LocalDate.of(2026, 9, 7), "800");
+        create(user.userId(), smaller.categoryId(), LocalDate.of(2026, 9, 7), "200");
+        create(user.userId(), larger.categoryId(), LocalDate.of(2026, 9, 8), "50000");
         categoryService.deactivate(user.userId(), larger.categoryId());
 
         var breakdown = dashboardService.categoryBreakdown(
                 user.userId(), 2026, 8, TransactionType.EXPENSE);
 
-        assertThat(breakdown.totalAmount()).isEqualByComparingTo("10000");
+        assertThat(breakdown.totalAmount()).isEqualByComparingTo("11000");
+        assertThat(breakdown.startDate()).isEqualTo(LocalDate.of(2026, 8, 8));
+        assertThat(breakdown.endDate()).isEqualTo(LocalDate.of(2026, 9, 7));
         assertThat(breakdown.items()).extracting("categoryId")
                 .containsExactly(larger.categoryId(), smaller.categoryId());
         assertThat(breakdown.items()).extracting("percentage")

@@ -10,6 +10,7 @@ const auth = useAuthStore();
 const navigation = [
   { to: "/dashboard", label: "대시보드", icon: "⌂" },
   { to: "/records", label: "기록", icon: "↕" },
+  { to: "/imports", label: "엑셀 가져오기", icon: "⇪" },
   { to: "/categories", label: "항목", icon: "▦" },
   { to: "/daily-notes", label: "특이사항", icon: "□" },
   { to: "/settings", label: "설정", icon: "⚙" },
@@ -44,7 +45,13 @@ function logout() {
         <div><p class="eyebrow">SALES SUMMARY</p><h1>{{ title }}</h1></div>
         <div class="topbar-actions"><span>{{ auth.user?.name }}님</span><button class="button secondary compact" @click="logout">로그아웃</button></div>
       </header>
-      <main class="page-content"><RouterView /></main>
+      <main class="page-content">
+        <RouterView v-slot="{ Component, route: currentRoute }">
+          <KeepAlive>
+            <component :is="Component" :key="currentRoute.name ?? currentRoute.path" />
+          </KeepAlive>
+        </RouterView>
+      </main>
     </div>
 
     <nav class="mobile-nav" aria-label="모바일 주요 메뉴">

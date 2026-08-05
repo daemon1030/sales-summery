@@ -96,8 +96,11 @@ public class DashboardService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR);
         }
         YearMonth target = YearMonth.of(year, month);
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        SettlementPeriod period = periodCalculator.calculate(user.getSettlementStartDay(),
+                target.atDay(user.getSettlementStartDay()));
         var projections = recordRepository.summarizeCategoryBreakdown(userId, transactionType,
-                target.atDay(1), target.atEndOfMonth());
+                period.startDate(), period.endDate());
         BigDecimal total = projections.stream().map(p -> p.getAmount() == null
                         ? BigDecimal.ZERO : p.getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -105,7 +108,8 @@ public class DashboardService {
                 .map(item -> new CategoryBreakdownItemResponse(item.getCategoryId(),
                         item.getCategoryName(), item.getAmount(), percentage(item.getAmount(), total)))
                 .toList();
-        return new CategoryBreakdownResponse(year, month, transactionType, total, items);
+        return new CategoryBreakdownResponse(year, month, transactionType,
+                period.startDate(), period.endDate(), total, items);
     }
 
     @Transactional(readOnly = true)
