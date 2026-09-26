@@ -41,7 +41,16 @@ out/
 .env.*
 !.env.example
 
+# Let’s Encrypt certificates include private keys and are created on the server.
+/certbot/
+
 # 프로젝트 내부에 생성될 수 있는 pnpm 패키지 캐시
 /.pnpm-store/
+
+# Local import samples may contain real business data.
+/samples/excel/*.xlsx
+
+# Exported Docker images are generated distribution artifacts.
+/outputs/docker/*.tar
 
 /new김밥나라.xlsx

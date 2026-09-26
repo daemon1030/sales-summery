@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales Summary · 코드 리뷰</title>
+  <meta name="description" content="Sales Summary 프로젝트의 코드 역할과 동작 흐름을 설명하는 리뷰 문서">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdf8;
+      --ink: #17302b;
+      --muted: #65736e;
+      --line: #d9ded7;
+      --brand: #146b5c;
+      --accent: #f08a4b;
+      --soft: #e3f0eb;
+      --code: #132522;
+      --shadow: 0 16px 40px rgba(25, 52, 45, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--bg); font: 15px/1.7 Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+    a { color: inherit; }
+    code { font-family: "Cascadia Code", Consolas, monospace; font-size: .91em; }
+    .shell { display: grid; grid-template-columns: 270px minmax(0, 1fr); min-height: 100vh; }
+    aside { position: sticky; top: 0; height: 100vh; padding: 30px 24px; color: #edf8f4; background: #113c35; overflow-y: auto; }
+    .brand { margin-bottom: 30px; }
+    .brand small { display: block; color: #9ec9bd; letter-spacing: .16em; text-transform: uppercase; }
+    .brand strong { display: block; margin-top: 5px; font-family: Georgia, serif; font-size: 25px; }
+    nav a { display: block; margin: 4px 0; padding: 8px 10px; border-radius: 8px; color: #cfe4de; text-decoration: none; }
+    nav a:hover { color: white; background: rgba(255,255,255,.09); }
+    aside footer { margin-top: 30px; color: #91b8ae; font-size: 12px; }
+    main { min-width: 0; }
+    .hero { padding: 76px clamp(28px, 7vw, 100px) 62px; color: white; background: radial-gradient(circle at 90% 20%, #2a8877 0, transparent 33%), #174e44; }
+    .eyebrow { color: #bce0d6; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { max-width: 850px; margin: 14px 0 16px; font-family: Georgia, serif; font-size: clamp(40px, 6vw, 72px); font-weight: 500; }
+    .hero p { max-width: 740px; margin: 0; color: #d9ece7; font-size: 18px; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+    .badge { padding: 5px 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(255,255,255,.08); font-size: 12px; }
+    .content { max-width: 1180px; margin: 0 auto; padding: 28px clamp(20px, 5vw, 72px) 90px; }
+    section { scroll-margin-top: 24px; margin: 26px 0; padding: 34px; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); box-shadow: var(--shadow); }
+    section > h2 { margin: 0 0 8px; font-family: Georgia, serif; font-size: 31px; font-weight: 600; }
+    section > .lead { max-width: 850px; margin: 0 0 24px; color: var(--muted); }
+    h3 { margin: 28px 0 10px; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .card b { display: block; margin-bottom: 4px; color: var(--brand); }
+    .card p { margin: 0; color: var(--muted); }
+    .callout { margin: 18px 0; padding: 14px 16px; border-left: 4px solid var(--accent); background: #fff4eb; }
+    .diagram { margin: 18px 0; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--brand); background: var(--soft); font-size: 12px; letter-spacing: .05em; }
+    tr:last-child td { border-bottom: 0; }
+    td code, .path { color: #9a4d22; overflow-wrap: anywhere; }
+    details { margin: 10px 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+    summary { cursor: pointer; padding: 12px 15px; color: var(--brand); font-weight: 750; }
+    details > div { padding: 0 15px 14px; }
+    ul { padding-left: 20px; }
+    .flow-note { display: grid; grid-template-columns: 34px 1fr; gap: 10px; margin: 11px 0; }
+    .num { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: white; background: var(--brand); font-size: 12px; font-weight: 800; }
+    .review { border-left: 4px solid var(--brand); }
+    .review.warn { border-left-color: var(--accent); }
+    .footnote { color: var(--muted); font-size: 13px; }
+    @media (max-width: 900px) {
+      .shell { display: block; }
+      aside { position: static; width: auto; height: auto; }
+      nav { display: flex; flex-wrap: wrap; }
+      nav a { margin-right: 4px; }
+      .grid { grid-template-columns: 1fr; }
+      section { padding: 24px 18px; }
+    }
+    @media print {
+      aside { display: none; }
+      .shell { display: block; }
+      .hero { padding: 35px; background: #174e44 !important; print-color-adjust: exact; }
+      section { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <aside>
+    <div class="brand"><small>Architecture review</small><strong>Sales Summary</strong></div>
+    <nav aria-label="문서 목차">
+      <a href="#overview">01. 전체 구조</a>
+      <a href="#packages">02. 코드 역할</a>
+      <a href="#request">03. 요청 처리</a>
+      <a href="#security">04. 인증과 소유권</a>
+      <a href="#domain">05. 도메인·DB</a>
+      <a href="#signup">06. 회원가입</a>
+      <a href="#records">07. 기록 관리</a>
+      <a href="#dashboard">08. 정산·대시보드</a>
+      <a href="#import">09. 엑셀 가져오기</a>
+      <a href="#frontend">10. 프런트엔드</a>
+      <a href="#review">11. 리뷰 메모</a>
+    </nav>
+    <footer>코드 기준: 2026-08-05<br>Mermaid 다이어그램 포함</footer>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">Code map · runtime flows · review notes</div>
+      <h1>코드를 읽기 위한<br>한 장의 지도</h1>
+      <p>각 패키지가 맡은 책임과 실제 요청이 JWT 필터, 서비스, 저장소, PostgreSQL을 통과하는 과정을 코드 경로와 Mermaid로 연결했습니다.</p>
+      <div class="badges"><span class="badge">Java 21</span><span class="badge">Spring Boot 4.1</span><span class="badge">Vue 3</span><span class="badge">PostgreSQL</span><span class="badge">Flyway</span><span class="badge">JWT</span></div>
+    </header>
+
+    <div class="content">
+      <section id="overview">
+        <h2>01. 전체 구조</h2>
+        <p class="lead">하나의 Spring Boot 애플리케이션 안에서 기능별 모듈을 나눈 모듈형 모놀리스다. Vue 빌드 결과도 같은 JAR의 정적 리소스로 제공되므로 배포 단위는 하나다.</p>
+        <div class="grid">
+          <div class="card"><b>Presentation</b><p>Vue 화면과 REST Controller가 사용자 입력을 받고 DTO 검증 및 HTTP 응답을 담당한다.</p></div>
+          <div class="card"><b>Application</b><p>Service가 트랜잭션, 소유권, 상태, 날짜 범위 등 업무 규칙을 조합한다.</p></div>
+          <div class="card"><b>Persistence</b><p>JPA Repository와 Flyway 스키마가 데이터 저장 및 기간별 집계를 담당한다.</p></div>
+        </div>
+        <div class="diagram mermaid">
+flowchart LR
+  U[사용자] --> V[Vue 3 SPA]
+  V -->|HTTP / JSON| S[Spring Security]
+  S --> C[REST Controller]
+  C --> A[Application Service]
+  A --> D[Domain Entity]
+  A --> R[Spring Data JPA]
+  R --> P[(PostgreSQL)]
+  F[Flyway SQL] -. 스키마 .-> P
+  C -. ApiResponse .-> V
+        </div>
+        <div class="callout"><strong>핵심 경계:</strong> Controller는 계산이나 DB 조회를 직접 하지 않고, Entity는 API 모델로 직접 노출하지 않는다. 사용자 ID는 요청값이 아닌 인증 객체에서만 가져온다.</div>
+      </section>
+
+      <section id="packages">
+        <h2>02. 코드 역할</h2>
+        <p class="lead">아래 표는 `src/main/java/com/example/sales_summery`의 코드 묶음을 중심으로 읽는 순서를 보여준다. DTO와 Projection은 해당 기능의 입출력 계약으로 함께 묶었다.</p>
+        <table>
+          <thead><tr><th>코드 / 경로</th><th>역할</th><th>함께 읽을 코드</th></tr></thead>
+          <tbody>
+            <tr><td><code>SalesSummeryApplication</code></td><td>Spring Boot 애플리케이션 진입점</td><td><code>application*.yml</code></td></tr>
+            <tr><td><code>auth/controller</code></td><td>회원가입·로그인 공개 API</td><td><code>SignupService</code>, <code>LoginService</code></td></tr>
+            <tr><td><code>auth/security</code></td><td>JWT 생성·파싱, Bearer 인증 필터, 401/403 JSON 응답</td><td><code>SecurityConfig</code></td></tr>
+            <tr><td><code>user</code></td><td>계정 상태와 내 정보, 이름·비밀번호·정산일·탈퇴 처리</td><td><code>User</code>, <code>UserService</code></td></tr>
+            <tr><td><code>category</code></td><td>사용자별 수입·지출 항목과 유형 조합, 활성 상태 관리</td><td><code>FinancialCategory</code>, 세 Enum</td></tr>
+            <tr><td><code>financialrecord</code></td><td>금액·날짜·메모 기록, 조건 검색, 정렬·페이지네이션</td><td><code>FinancialRecordRepository</code></td></tr>
+            <tr><td><code>dailynote</code></td><td>사용자·날짜당 하나인 특이사항 CRUD</td><td><code>DailyNoteService</code></td></tr>
+            <tr><td><code>dashboard</code></td><td>손익 합계, 항목 비중, 일·월·연 추이, 최근 5건 집계</td><td><code>DashboardService</code>, Projection</td></tr>
+            <tr><td><code>settlement</code></td><td>정산 시작일과 기준 날짜로 포함 범위를 계산하는 순수 컴포넌트</td><td><code>SettlementPeriodCalculator</code></td></tr>
+            <tr><td><code>financialrecordimport</code></td><td>엑셀 파싱, 중복 검사, 열-항목 매핑, 기록·특이사항 일괄 저장</td><td><code>ExcelImportParser</code>, <code>ImportSessionStore</code></td></tr>
+            <tr><td><code>global/config</code></td><td>보안, BCrypt, 한국 시간 Clock, SPA 라우팅 설정</td><td><code>SecurityConfig</code>, <code>DateTimeConfig</code></td></tr>
+            <tr><td><code>global/response</code></td><td>성공·실패·페이지 응답 형식을 통일</td><td><code>ApiResponse</code>, <code>PageResponse</code></td></tr>
+            <tr><td><code>global/exception</code></td><td>업무 오류 코드를 HTTP 상태와 공통 오류 본문으로 변환</td><td><code>ErrorCode</code>, <code>GlobalExceptionHandler</code></td></tr>
+            <tr><td><code>db/migration</code></td><td>테이블, FK, CHECK, UNIQUE, 인덱스를 버전 관리</td><td><code>V1__...</code>, <code>V2__...</code></td></tr>
+          </tbody>
+        </table>
+
+        <details><summary>Controller → Service → Repository별 책임</summary><div>
+          <ul><li><strong>Controller:</strong> 경로·상태 코드, Request DTO 검증, <code>@AuthenticationPrincipal</code> 전달</li><li><strong>Service:</strong> 트랜잭션과 업무 규칙, 사용자 소유 데이터 조회</li><li><strong>Repository:</strong> 소유권 조건이 포함된 조회 및 PostgreSQL 집계</li><li><strong>Domain:</strong> <code>change</code>, <code>activate</code>, <code>withdraw</code>처럼 의도가 드러나는 상태 변경</li><li><strong>DTO/Projection:</strong> 외부 계약과 DB 집계 결과를 Entity로부터 분리</li></ul>
+        </div></details>
+      </section>
+
+      <section id="request">
+        <h2>03. 보호 API 요청 처리</h2>
+        <p class="lead">브라우저가 저장한 Access Token을 전송하면 필터가 인증 주체를 만들고, Controller는 그 주체의 ID만 서비스에 넘긴다.</p>
+        <div class="diagram mermaid">
+sequenceDiagram
+  autonumber
+  actor Client
+  participant Filter as JwtAuthenticationFilter
+  participant Token as JwtTokenService
+  participant Users as UserRepository
+  participant Controller
+  participant Service
+  participant Repo as FeatureRepository
+  participant DB as PostgreSQL
+  Client->>Filter: Authorization: Bearer token
+  Filter->>Token: 서명·만료 검증 및 userId 파싱
+  Filter->>Users: findById(userId)
+  Users->>DB: 현재 사용자 상태 조회
+  alt 토큰 유효 + ACTIVE
+    Filter->>Controller: AuthenticatedUser 설정 후 진행
+    Controller->>Service: userId + Request DTO
+    Service->>Repo: userId가 포함된 소유 데이터 조회
+    Repo->>DB: SELECT / INSERT / UPDATE
+    Service-->>Controller: Response DTO
+    Controller-->>Client: ApiResponse.success(data)
+  else 누락·만료·정지·탈퇴
+    Filter-->>Client: 401 공통 오류 응답
+  end
+        </div>
+        <div class="flow-note"><span class="num">1</span><div><b>정적 화면과 회원가입·로그인만 공개</b><br><code>SecurityConfig</code>가 나머지 요청에 인증을 요구한다.</div></div>
+        <div class="flow-note"><span class="num">2</span><div><b>요청마다 상태 재검증</b><br>JWT가 아직 유효해도 DB 상태가 ACTIVE가 아니면 접근을 막는다.</div></div>
+        <div class="flow-note"><span class="num">3</span><div><b>소유권을 쿼리에 포함</b><br><code>findBy...AndUserId</code> 계열 조회로 다른 사용자의 리소스를 404처럼 처리한다.</div></div>
+      </section>
+
+      <section id="security">
+        <h2>04. 인증과 소유권</h2>
+        <p class="lead">세션을 만들지 않는 Stateless 보안이다. Access Token은 1시간 동안 유효하며 로그아웃은 클라이언트가 토큰을 제거하는 방식이다.</p>
+        <div class="grid">
+          <div class="card"><b>JwtTokenService</b><p>사용자 식별자를 담은 토큰을 만들고 서명·만료를 검증한다.</p></div>
+          <div class="card"><b>AuthenticatedUser</b><p><code>userId</code>와 <code>loginId</code>만 가진 인증 Principal이다.</p></div>
+          <div class="card"><b>PasswordConfig</b><p>BCrypt <code>PasswordEncoder</code>를 Bean으로 제공해 평문 저장을 방지한다.</p></div>
+        </div>
+        <h3>보안 검토 포인트</h3>
+        <ul>
+          <li>CSRF, form login, HTTP Basic은 끄고 Bearer JWT만 사용한다.</li>
+          <li>로그인 실패는 아이디 존재 여부를 감추는 <code>INVALID_CREDENTIALS</code>로 통일한다.</li>
+          <li>비밀번호 변경과 탈퇴 시 현재 비밀번호를 다시 확인한다.</li>
+          <li>운영에서는 <code>JWT_SECRET</code>과 DB 비밀번호를 환경 변수로 주입한다.</li>
+        </ul>
+      </section>
+
+      <section id="domain">
+        <h2>05. 도메인과 데이터베이스</h2>
+        <p class="lead">기록 테이블에는 사용자 ID를 중복 저장하지 않는다. 기록 → 항목 → 사용자 관계로 소유자를 판단하고, 업무 규칙을 애플리케이션과 DB 제약에 함께 둔다.</p>
+        <div class="diagram mermaid">
+erDiagram
+  USERS ||--o{ FINANCIAL_CATEGORIES : owns
+  USERS ||--o{ DAILY_NOTES : writes
+  USERS ||--o{ FINANCIAL_RECORD_IMPORTS : imports
+  USERS ||--o{ FINANCIAL_IMPORT_COLUMN_MAPPINGS : remembers
+  FINANCIAL_CATEGORIES ||--o{ FINANCIAL_RECORDS : classifies
+  FINANCIAL_CATEGORIES ||--o{ FINANCIAL_IMPORT_COLUMN_MAPPINGS : maps
+  USERS {
+    bigint user_id PK
+    varchar login_id UK
+    varchar password_hash
+    varchar status
+    smallint settlement_start_day
+  }
+  FINANCIAL_CATEGORIES {
+    bigint category_id PK
+    bigint user_id FK
+    varchar transaction_type
+    varchar cost_type
+    boolean is_active
+  }
+  FINANCIAL_RECORDS {
+    bigint record_id PK
+    bigint category_id FK
+    date record_date
+    numeric amount
+  }
+  DAILY_NOTES {
+    bigint note_id PK
+    bigint user_id FK
+    date note_date UK
+  }
+        </div>
+        <table>
+          <thead><tr><th>규칙</th><th>코드</th><th>DB</th></tr></thead>
+          <tbody>
+            <tr><td>정산 시작일 1~28</td><td><code>User</code> 검증</td><td><code>CHECK settlement_start_day</code></td></tr>
+            <tr><td>사용자별 항목명 유일</td><td><code>CategoryService</code> 중복 확인</td><td><code>UNIQUE(user_id, category_name)</code></td></tr>
+            <tr><td>수입/지출-비용유형 조합</td><td><code>FinancialCategory</code> 검증</td><td><code>CHECK transaction_type/cost_type</code></td></tr>
+            <tr><td>금액 0 초과</td><td>DTO·Entity 검증</td><td><code>CHECK amount &gt; 0</code></td></tr>
+            <tr><td>사용자·날짜당 특이사항 1개</td><td><code>DailyNoteService</code> 중복 확인</td><td><code>UNIQUE(user_id, note_date)</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="signup">
+        <h2>06. 회원가입 트랜잭션</h2>
+        <p class="lead">사용자 저장과 기본 항목 5개 생성을 하나의 트랜잭션으로 묶는다. 항목 생성 중 하나라도 실패하면 사용자 생성도 롤백된다.</p>
+        <div class="diagram mermaid">
+sequenceDiagram
+  actor Client
+  participant AC as AuthController
+  participant SS as SignupService
+  participant PE as PasswordEncoder
+  participant UR as UserRepository
+  participant DC as DefaultCategoryCreator
+  participant CR as CategoryRepository
+  Client->>AC: POST /api/v1/auth/signup
+  AC->>SS: signup(validated request)
+  SS->>SS: loginId 소문자 정규화·중복 확인
+  SS->>PE: BCrypt encode(password)
+  SS->>UR: User 저장
+  SS->>DC: createFor(user)
+  DC->>CR: 기본 항목 5개 저장
+  Note over SS,CR: 하나의 @Transactional 경계
+  alt 모두 성공
+    SS-->>Client: 201 + SignupResponse
+  else 하나라도 실패
+    SS-->>Client: 오류 응답 + 전체 rollback
+  end
+        </div>
+        <p class="footnote">기본 항목: 카드 매출, 현금 매출, 재료비, 인건비, 월세.</p>
+      </section>
+
+      <section id="records">
+        <h2>07. 수입·지출 기록 관리</h2>
+        <p class="lead">기록 생성·수정 시 선택 항목이 인증 사용자의 소유인지, 활성 상태인지 확인한다. 검색은 날짜 범위가 필수이며 항목·수입지출 구분을 선택적으로 적용한다.</p>
+        <div class="diagram mermaid">
+flowchart TD
+  A[POST/PATCH 기록 DTO] --> B{날짜·금액 유효?}
+  B -- 아니오 --> E[VALIDATION_ERROR / INVALID_AMOUNT]
+  B -- 예 --> C[사용자 ID + categoryId 조회]
+  C --> D{본인 소유 항목?}
+  D -- 아니오 --> N[CATEGORY_NOT_FOUND]
+  D -- 예 --> F{활성 항목?}
+  F -- 아니오 --> I[CATEGORY_INACTIVE]
+  F -- 예 --> G[FinancialRecord.create/change]
+  G --> H[Repository 저장]
+  H --> J[FinancialRecordResponse]
+        </div>
+        <h3>목록 검색</h3>
+        <p><code>GET /api/v1/financial-records</code>는 <code>startDate</code>, <code>endDate</code>를 받고 선택적으로 <code>categoryId</code>, <code>transactionType</code>, <code>page</code>, <code>size</code>, <code>sort</code>를 적용한다. 기본 크기는 20, 최대 100이며 기본 정렬은 기록 날짜 최신순이다.</p>
+      </section>
+
+      <section id="dashboard">
+        <h2>08. 정산 기간과 대시보드</h2>
+        <p class="lead">대시보드 전용 테이블 없이 <code>financial_records</code>를 집계한다. 수입과 지출은 항목의 <code>transactionType</code>으로 구분하고 순이익은 수입−지출로 계산한다.</p>
+        <div class="diagram mermaid">
+flowchart LR
+  U[User.settlementStartDay D] --> C[SettlementPeriodCalculator]
+  T[Asia/Seoul 오늘] --> C
+  C --> Q{오늘의 일 >= D?}
+  Q -- 예 --> A[이번 달 D일 시작]
+  Q -- 아니오 --> B[이전 달 D일 시작]
+  A --> Z[종료 = 시작 + 1개월 - 1일]
+  B --> Z
+  Z --> R[Repository 기간 집계]
+  R --> P[totalIncome]
+  R --> X[totalExpense]
+  P --> N[netProfit = income - expense]
+  X --> N
+        </div>
+        <div class="grid">
+          <div class="card"><b>Profit summary</b><p>오늘, 현재 정산 기간, 직접 선택 기간의 합계를 반환한다.</p></div>
+          <div class="card"><b>Trend</b><p>일별 최대 366일, 월별 12개월, 연도별 최대 10년의 빈 구간도 0으로 채운다.</p></div>
+          <div class="card"><b>Breakdown</b><p>정산 기간의 항목별 금액과 전체 대비 비율을 계산한다.</p></div>
+        </div>
+      </section>
+
+      <section id="import">
+        <h2>09. 엑셀 가져오기</h2>
+        <p class="lead">가져오기는 분석과 확정의 2단계다. 먼저 파일을 파싱해 자동 매핑 결과를 보여주고, 사용자가 미매핑 열을 처리한 뒤 하나의 트랜잭션으로 저장한다.</p>
+        <div class="diagram mermaid">
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as ImportPage
+  participant API as ImportController
+  participant Parser as ExcelImportParser
+  participant Store as ImportSessionStore
+  participant Service as ImportService
+  participant DB as PostgreSQL
+  User->>UI: xlsx 파일 선택 (최대 50개)
+  UI->>API: POST /analyze (multipart)
+  API->>Service: 파일 크기·총 용량 검증
+  Service->>DB: 기존 파일 SHA-256·열 매핑 조회
+  Service->>Parser: 날짜·금액·특이사항 파싱
+  Service->>Store: 분석 결과를 임시 token으로 보관
+  Service-->>UI: READY/DUPLICATE/INVALID + 매핑 목록
+  User->>UI: 기존 항목 / 새 항목 / 무시 선택
+  UI->>API: POST /{token}/confirm
+  API->>Service: 사용자와 token 소유권 확인
+  Service->>DB: 기록·특이사항·매핑·가져오기 이력 저장
+  Service->>Store: 사용한 token 제거
+  Service-->>UI: 생성/중복/건너뜀 집계
+        </div>
+        <ul>
+          <li>파일당 20MB, 전체 100MB, 최대 50개를 허용한다.</li>
+          <li>파일 SHA-256 해시를 사용자별로 저장해 같은 내용의 재가져오기를 막는다.</li>
+          <li>정규화한 열 이름과 카테고리 매핑을 기억해 다음 파일에서 자동 연결한다.</li>
+          <li>이미 존재하는 날짜의 특이사항은 덮어쓰지 않고 건너뛴다.</li>
+        </ul>
+      </section>
+
+      <section id="frontend">
+        <h2>10. 프런트엔드 동작</h2>
+        <p class="lead">Vue SPA는 해시 라우팅을 사용하며 운영 빌드 경로는 <code>/service/</code>다. 인증 Store와 API Client가 토큰 처리의 중심이다.</p>
+        <div class="diagram mermaid">
+flowchart LR
+  R[Vue Router] --> G{requiresAuth?}
+  G -- 예 --> S[Pinia auth store]
+  G -- 아니오 --> P[Login / Signup]
+  S -->|토큰 없음| P
+  S -->|토큰 있음| L[AppLayout]
+  L --> D[DashboardPage]
+  L --> C[CategoriesPage]
+  L --> F[RecordsPage]
+  L --> N[DailyNotesPage]
+  L --> I[ImportPage]
+  L --> E[SettingsPage]
+  D & C & F & N & I & E --> A[api/client.ts]
+  A -->|Bearer token| B[/api/v1]
+        </div>
+        <table>
+          <thead><tr><th>프런트 코드</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td><code>router.ts</code></td><td>화면 경로, 지연 로딩, 인증 필요 여부를 관리한다.</td></tr>
+            <tr><td><code>stores/auth.ts</code></td><td>토큰과 로그인 상태, 로그아웃을 관리한다.</td></tr>
+            <tr><td><code>api/client.ts</code></td><td>공통 헤더·JSON 처리, 인증 실패 처리를 담당한다.</td></tr>
+            <tr><td><code>pages/*</code></td><td>도메인별 사용자 흐름과 폼·목록을 구성한다.</td></tr>
+            <tr><td><code>components/*Chart.vue</code></td><td>대시보드 집계 응답을 Chart.js 시각화로 바꾼다.</td></tr>
+            <tr><td><code>vite.config.ts</code></td><td>개발 API 프록시와 Spring 정적 리소스 출력 경로를 정의한다.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="review">
+        <h2>11. 코드 리뷰 메모</h2>
+        <p class="lead">현재 구현에서 잘 지켜진 경계와 유지보수 시 확인할 지점을 함께 정리했다.</p>
+        <div class="card review"><b>좋은 점 · 소유권 검증이 일관적</b><p>Controller가 클라이언트의 userId를 받지 않고 인증 Principal을 사용하며, Repository 조회에도 사용자 조건이 포함된다.</p></div>
+        <div class="card review"><b>좋은 점 · 이중 안전장치</b><p>금액, 유형 조합, 유일성 같은 핵심 규칙이 도메인/서비스와 Flyway 제약에 함께 표현돼 있다.</p></div>
+        <div class="card review"><b>좋은 점 · 테스트 가능한 시간 계산</b><p><code>Clock</code>과 별도 <code>SettlementPeriodCalculator</code>를 사용해 한국 시간 기준 경계 날짜를 재현할 수 있다.</p></div>
+        <div class="card review warn"><b>확인 필요 · local JWT 기본값</b><p>개발 편의를 위한 기본 키가 설정에 존재한다. 운영은 반드시 <code>JWT_SECRET</code>을 주입하고 기본값으로 실행되지 않도록 배포 환경을 검증해야 한다.</p></div>
+        <div class="card review warn"><b>확인 필요 · 가져오기 임시 세션</b><p><code>ImportSessionStore</code>는 애플리케이션 메모리에 있다. 단일 인스턴스에는 적합하지만 재시작이나 수평 확장 시 분석 token이 유지·공유되지 않는다.</p></div>
+        <div class="card review warn"><b>확인 필요 · 문서와 구현 동기화</b><p>API 변경 시 <code>static/openapi.yaml</code>, README, 이 리뷰 문서를 함께 갱신해야 실제 동작과 문서가 어긋나지 않는다.</p></div>
+        <h3>검증 명령</h3>
+        <p><code>.\gradlew.bat test</code>로 백엔드 통합 테스트를, <code>frontend</code>에서 <code>pnpm typecheck</code>와 <code>pnpm build</code>로 프런트 계약과 빌드를 확인한다. PostgreSQL 전용 검증은 Docker와 Testcontainers가 필요하다.</p>
+        <p class="footnote">이 문서는 실행 코드가 아닌 정적 리뷰 자료다. Mermaid 렌더링은 아래 CDN 모듈을 사용하므로 최초 열람 시 인터넷 연결이 필요하다.</p>
+      </section>
+    </div>
+  </main>
+</div>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "base",
+    securityLevel: "strict",
+    themeVariables: {
+      primaryColor: "#e3f0eb",
+      primaryTextColor: "#17302b",
+      primaryBorderColor: "#146b5c",
+      lineColor: "#51736b",
+      secondaryColor: "#fff4eb",
+      tertiaryColor: "#fffdf8",
+      fontFamily: "Inter, Pretendard, Noto Sans KR, sans-serif"
+    }
+  });
+</script>
+</body>
+</html>

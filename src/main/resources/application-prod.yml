@@ -5,6 +5,10 @@ spring:
   flyway:
     enabled: true
 
+server:
+  # Nginx가 전달하는 X-Forwarded-* 헤더로 원래 HTTPS 요청 정보를 인식한다.
+  forward-headers-strategy: framework
+
 # 운영 환경에서는 SQL과 요청 상세 로그를 기본적으로 비활성화한다.
 logging:
   level:
